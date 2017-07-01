@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <title>BigFishGames Downloader</title>
+    <meta content="">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css"></script>
+  </head>
+  <body>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
+    <nav>
+    <div class="nav-wrapper">
+      <a href="#!" class="brand-logo center">BFG Downloader</a>
+    </div>
+    </nav>
+    <div style="margin: auto;width: 50%;padding: 10px;" id="loading">
+      <h5>Fetching information...</h5>
+      <div class="progress">
+      <div class="indeterminate"></div>
+      </div>
+    </div>
+    <div hidden style="margin: auto;width: 55%;padding: 10px;" id="details">
+      <h3 class="header">Game Information</h3>
+      <ul class="collection">
+        <li class="collection-item avatar">
+      <img src="" alt="Game Icon" class="circle">
+      <span class="title"></span>
+      <p id="gamedesc">
+        description
+      </p>
+        </li>
+        <li class="collection-item"><div>Game ID<div href="#!" class="secondary-content" id="wid"></div></div></li>
+        <li class="collection-item"><div>Download Size<div href="#!" class="secondary-content" id="downsize"></div></div></li>
+        <ul class="collection" id="dllist"></ul>
+      </ul>
+    </div>
+  </body>
+</html>
