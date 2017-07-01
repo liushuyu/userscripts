@@ -22,8 +22,8 @@
       <h3 class="header">Game Information</h3>
       <ul class="collection">
         <li class="collection-item avatar">
-      <img src="" alt="Game Icon" class="circle">
-      <span class="title"></span>
+      <img src="" alt="Game Icon" class="circle" id="gicon">
+      <span class="title" id="gname"></span>
       <p id="gamedesc">
         description
       </p>
@@ -33,5 +33,20 @@
         <ul class="collection" id="dllist"></ul>
       </ul>
     </div>
+    <script type="text/javascript">
+      window.addEventListener('message', function(evt) {
+        if (evt.origin.indexOf('http://www.bigfishgames.com') == 0) {
+          if (!evt.data) {alert('Error!');window.close();}
+          $('#gicon').attr('src'. evt.data.icon);
+          $('#dllist').append(evt.data.dllist);
+          $('#downsize')[0].innerText = evt.data.fsize;
+          //$('#wid')
+          $('#gname')[0].innerText = evt.data.name;
+          $('#gamedesc')[0].innerText = evt.data.desc;
+          $('#loading').fadeOut();
+          $('#details').fadeIn();
+        }
+      });
+    </script>
   </body>
 </html>
