@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BigFishGames Downloader
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  Download trial games without installing BFG client.
 // @author       liushuyu
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js
@@ -9,6 +9,8 @@
 // @grant        GM_xmlhttpRequest
 // @connect      bigfishgames.com
 // ==/UserScript==
+
+var webUI;
 
 (function() {
     'use strict';
@@ -58,6 +60,7 @@ function findMeta(prepURL) {
 function buildReq(metaData) {
     var email = prompt("Enter the e-mail address you used to register BigFishGames account:", "");
     if (!(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email))) {alert('Invaild e-mail address detected! Aborting.'); return;}
+    webUI = window.open("https://liushuyu.github.io/userscripts/bfg/bfg.html");
     var reqbody = '<?xml version="1.0" encoding="utf-8"?><methodCall><methodName>gms.getGameInfo</methodName><params><param><value><struct><member><name>gameWID</name><value><string>' + metaData.WID + '</string></value></member><member><name>siteID</name><value><string>' + metaData.site + '</string></value></member><member><name>languageID</name><value><string>' + metaData.lang + '</string></value></member><member><name>email</name><value><string>' + email + '</string></value></member><member><name>extData</name><value><string></string></value></member><member><name>downloadID</name><value><string>0</string></value></member></struct></value></param></params></methodCall>';
     GM_xmlhttpRequest({
         method: "POST",
@@ -78,29 +81,35 @@ function parseResp(resp) {
     var parser = new DOMParser();
     var xmldoc = parser.parseFromString(resp,"text/xml");
     var downloadInfo = xmldoc.getElementsByTagName('struct')[0].getElementsByTagName('member')[0].getElementsByTagName('struct');
+    var gameInfo = xmldoc.getElementsByTagName('struct')[0].childNodes[3].getElementsByTagName('struct')[0];
     var cdns = downloadInfo[0].childNodes[3].getElementsByTagName('string');
     var fileInfo = downloadInfo[0].childNodes[5].getElementsByTagName('struct');
     var downloadFileInfo = [];
+    var snaps = getXMLParamByName(gameInfo, 'resourceUrls')[0].children[0];
+    var gameParsedInfo = {name: getXMLParamByName(gameInfo, 'name')[0].children[0].innerHTML, id: getXMLParamByName(gameInfo, 'id')[0].children[0].innerHTML, desc: getXMLParamByName(gameInfo, 'description')[0].children[0].innerHTML, icon: getXMLParamByName(snaps, 'thumbnail1')[0].children[0].innerHTML, fsize: 0};
+    console.log(gameParsedInfo);
     for (var i = 0; i < fileInfo.length; i++) {
-        var dataSet = fileInfo[i].getElementsByTagName('string');
-        console.log(dataSet);
-        downloadFileInfo.push({name: dataSet[0].innerHTML, url: cdns[0].innerHTML + '/' + dataSet[(fileInfo.length > 1 ? 4 : 3)].innerHTML});
+        var dataSet = fileInfo[i];
+        var segsize = parseInt(getXMLParamByName(dataSet, 'fileSegmentSize')[0].children[0].innerHTML);
+        gameParsedInfo.fsize += segsize;
+        downloadFileInfo.push({name: getXMLParamByName(dataSet, 'fileSegmentName')[0].children[0].innerHTML, url: cdns[0].innerHTML + '/' + getXMLParamByName(dataSet, 'urlName')[0].children[0].innerHTML});
     }
-    processDownload(downloadFileInfo);
+    processDownload(downloadFileInfo, gameParsedInfo);
 }
 
-function processDownload(downData) {
-   if (downData.length > 0) {
-       htmlContent = "<html><head><title>BigFishGame direct download</title></head><body><h2>Your game need to download the following " + downData.length + " files</h2><ol>";
-       for (var i = 0; i < downData.length; i++) {
-           htmlContent += "<li><a href='" + downData[i].url + "'>Click to download file " + (i + 1) + "</a>";
-       }
-       htmlContent += "</ol></body></html>";
-       var opened = window.open("");
-       opened.document.write(htmlContent);
-       return;
-   }
-    window.location = downData[0].url;
+function processDownload(downData, metaData) {
+    var dllist = '';
+    if (downData.length > 0) {
+        for (var i = 0; i < downData.length; i++) {
+            dllist += '<li class="collection-item"><div>File ' + (i + 1) + '<div href="#!" class="secondary-content"><a href="' + downData[i].url + '">Download</a></div></div></li>';
+        }
+        metaData.dllist = dllist; metaData.fc = downData.length;
+        if ((!webUI.window) || webUI.closed) {
+            webUI = window.open("https://liushuyu.github.io/userscripts/bfg/bfg.html");
+        }
+        webUI.window.postMessage(metaData, '*');
+        return;
+    }
 }
 
 function getParameterByName(name, url) {
@@ -113,3 +122,11 @@ function getParameterByName(name, url) {
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
+function getXMLParamByName(struct, name) {
+    var children = struct.children;
+    for (var i = 0; i < children.length; i++) {
+        var grandson = children[i];
+        if (!grandson) continue;
+        if (grandson.getElementsByTagName('name')[0].innerHTML == name) return grandson.getElementsByTagName('value');
+    }
+}
