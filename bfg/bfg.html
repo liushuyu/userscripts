@@ -30,19 +30,32 @@
         </li>
         <li class="collection-item"><div>Game ID<div href="#!" class="secondary-content" id="wid"></div></div></li>
         <li class="collection-item"><div>Download Size<div href="#!" class="secondary-content" id="downsize"></div></div></li>
-        <ul class="collection" id="dllist"></ul>
+        <ul class="collection" id="dllist">
+          <li class="collection-item"><strong>Download Link(s)</strong><div href="#!" class="secondary-content" id="filecount"></div></div></li>
+        </ul>
       </ul>
     </div>
     <script type="text/javascript">
+      function getReadableFileSizeString(fileSizeInBytes) {
+        var i = -1;
+        var byteUnits = [' kB', ' MB', ' GB', ' TB'];
+        do {
+            fileSizeInBytes = fileSizeInBytes / 1024;
+            i++;
+        } while (fileSizeInBytes > 1024);
+        return Math.max(fileSizeInBytes, 0.1).toFixed(1) + byteUnits[i];
+      };
       window.addEventListener('message', function(evt) {
         if (evt.origin.indexOf('http://www.bigfishgames.com') == 0) {
           if (!evt.data) {alert('Error!');window.close();}
-          $('#gicon').attr('src'. evt.data.icon);
+          $('#gicon').attr('src', evt.data.icon);
           $('#dllist').append(evt.data.dllist);
-          $('#downsize')[0].innerText = evt.data.fsize;
-          //$('#wid')
+          $('#downsize')[0].innerText = getReadableFileSizeString(evt.data.fsize);
+          $('#wid')[0].innerText = evt.data.id;
           $('#gname')[0].innerText = evt.data.name;
-          $('#gamedesc')[0].innerText = evt.data.desc;
+          $('#gamedesc')[0].innerText = decodeURIComponent(evt.data.desc);
+          var filecount = evt.data.fc;
+          $('#filecount')[0].innerText = filecount + (filecount > 1 ? ' files' : ' file');
           $('#loading').fadeOut();
           $('#details').fadeIn();
         }
